@@ -1,0 +1,128 @@
+pubsub:
+  project_id: unitvectory-labs-management
+  subscription_id: GitHub-PR-Issue-Opened
+
+github:
+  token_env_var: GITHUB_TOKEN
+  graphql_endpoint: https://api.github.com/graphql
+
+behavior:
+  on_failure: nack
+
+constants:
+  projects:
+    public:
+      project_id: PVT_kwDO_PUBLIC
+      status_field_id: PVTSSF_PUBLIC_STATUS
+      todo_option_id: f75ad846
+    private:
+      project_id: PVT_kwDO_PRIVATE
+      status_field_id: PVTSSF_PRIVATE_STATUS
+      todo_option_id: f75ad846
+
+rules:
+  - name: public-opened-item-to-public-project
+    enabled: true
+    when: >
+      (attributes.gh_event = "pull_request" OR attributes.gh_event = "issues") AND
+      attributes.action = "opened" AND
+      (payload.repository.visibility = "public" OR payload.repository.private = false)
+    then:
+      - name: add_to_project
+        type: github_graphql
+        config:
+          document: |
+            mutation AddItemToProject($projectId: ID!, $contentId: ID!) {
+              addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
+                item {
+                  id
+                }
+              }
+            }
+          variables:
+            projectId: ${constants.projects.public.project_id}
+            contentId: ${coalesce(payload.pull_request.node_id, payload.issue.node_id)}
+          outputs:
+            itemId: data.addProjectV2ItemById.item.id
+
+      - name: set_status_todo
+        type: github_graphql
+        config:
+          document: |
+            mutation SetProjectFieldValue(
+              $projectId: ID!,
+              $itemId: ID!,
+              $fieldId: ID!,
+              $optionId: String!
+            ) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $projectId
+                itemId: $itemId
+                fieldId: $fieldId
+                value: { singleSelectOptionId: $optionId }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }
+          variables:
+            projectId: ${constants.projects.public.project_id}
+            itemId: ${steps.add_to_project.outputs.itemId}
+            fieldId: ${constants.projects.public.status_field_id}
+            optionId: ${constants.projects.public.todo_option_id}
+          outputs:
+            updatedItemId: data.updateProjectV2ItemFieldValue.projectV2Item.id
+
+  - name: private-opened-item-to-private-project
+    enabled: true
+    when: >
+      (attributes.gh_event = "pull_request" OR attributes.gh_event = "issues") AND
+      attributes.action = "opened" AND
+      (payload.repository.visibility = "private" OR payload.repository.private = true)
+    then:
+      - name: add_to_project
+        type: github_graphql
+        config:
+          document: |
+            mutation AddItemToProject($projectId: ID!, $contentId: ID!) {
+              addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
+                item {
+                  id
+                }
+              }
+            }
+          variables:
+            projectId: ${constants.projects.private.project_id}
+            contentId: ${coalesce(payload.pull_request.node_id, payload.issue.node_id)}
+          outputs:
+            itemId: data.addProjectV2ItemById.item.id
+
+      - name: set_status_todo
+        type: github_graphql
+        config:
+          document: |
+            mutation SetProjectFieldValue(
+              $projectId: ID!,
+              $itemId: ID!,
+              $fieldId: ID!,
+              $optionId: String!
+            ) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $projectId
+                itemId: $itemId
+                fieldId: $fieldId
+                value: { singleSelectOptionId: $optionId }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }
+          variables:
+            projectId: ${constants.projects.private.project_id}
+            itemId: ${steps.add_to_project.outputs.itemId}
+            fieldId: ${constants.projects.private.status_field_id}
+            optionId: ${constants.projects.private.todo_option_id}
+          outputs:
+            updatedItemId: data.updateProjectV2ItemFieldValue.projectV2Item.id
