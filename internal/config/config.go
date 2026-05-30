@@ -9,11 +9,11 @@ import (
 
 // Config is the top-level configuration structure.
 type Config struct {
-	PubSub    PubSubConfig           `yaml:"pubsub"`
-	GitHub    GitHubConfig           `yaml:"github"`
-	Behavior  BehaviorConfig         `yaml:"behavior"`
-	Constants map[string]interface{} `yaml:"constants"`
-	Rules     []Rule                 `yaml:"rules"`
+	PubSub    PubSubConfig   `yaml:"pubsub"`
+	GitHub    GitHubConfig   `yaml:"github"`
+	Behavior  BehaviorConfig `yaml:"behavior"`
+	Constants map[string]any `yaml:"constants"`
+	Rules     []Rule         `yaml:"rules"`
 }
 
 // PubSubConfig holds Google Cloud Pub/Sub settings.

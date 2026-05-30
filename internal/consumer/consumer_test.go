@@ -66,9 +66,9 @@ func (mc *mockClient) Close() error {
 
 func validPayload(t *testing.T) []byte {
 	t.Helper()
-	data, err := json.Marshal(map[string]interface{}{
+	data, err := json.Marshal(map[string]any{
 		"action": "opened",
-		"repository": map[string]interface{}{
+		"repository": map[string]any{
 			"full_name": "owner/repo",
 		},
 	})
