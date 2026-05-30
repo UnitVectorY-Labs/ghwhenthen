@@ -173,7 +173,7 @@ func (n *andNode) Evaluate(e *event.Event) bool {
 type compareNode struct {
 	field string
 	op    string
-	value interface{} // string, bool, or nil (null)
+	value any // string, bool, or nil (null)
 }
 
 func (n *compareNode) Evaluate(e *event.Event) bool {
@@ -200,7 +200,7 @@ func (n *compareNode) Evaluate(e *event.Event) bool {
 	return false
 }
 
-func compareEqual(fieldVal, litVal interface{}) bool {
+func compareEqual(fieldVal, litVal any) bool {
 	switch lv := litVal.(type) {
 	case string:
 		fv, ok := fieldVal.(string)
@@ -328,7 +328,7 @@ func (p *parser) parsePrimary() (Expression, error) {
 			return nil, fmt.Errorf("expected '=' or '!=' after field reference at position %d", opTok.pos)
 		}
 		valTok := p.advance()
-		var val interface{}
+		var val any
 		switch valTok.typ {
 		case tokenString:
 			val = valTok.value

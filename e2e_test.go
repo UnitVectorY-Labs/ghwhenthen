@@ -19,8 +19,8 @@ import (
 
 // graphQLRequest captures a decoded GraphQL request for assertions.
 type graphQLRequest struct {
-	Query     string                 `json:"query"`
-	Variables map[string]interface{} `json:"variables"`
+	Query     string         `json:"query"`
+	Variables map[string]any `json:"variables"`
 }
 
 // mockGraphQLServer tracks requests and returns canned responses for
@@ -45,10 +45,10 @@ func (m *mockGraphQLServer) handler(w http.ResponseWriter, r *http.Request) {
 
 	// Determine which mutation was sent based on request variables.
 	if _, ok := req.Variables["contentId"]; ok {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"data": map[string]interface{}{
-				"addProjectV2ItemById": map[string]interface{}{
-					"item": map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"addProjectV2ItemById": map[string]any{
+					"item": map[string]any{
 						"id": "PVTI_mock_item_id",
 					},
 				},
@@ -57,10 +57,10 @@ func (m *mockGraphQLServer) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"data": map[string]interface{}{
-			"updateProjectV2ItemFieldValue": map[string]interface{}{
-				"projectV2Item": map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
+		"data": map[string]any{
+			"updateProjectV2ItemFieldValue": map[string]any{
+				"projectV2Item": map[string]any{
 					"id": "PVTI_mock_item_id",
 				},
 			},

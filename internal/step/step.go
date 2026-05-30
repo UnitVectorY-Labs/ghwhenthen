@@ -14,7 +14,7 @@ import (
 
 // Executor executes a step and returns outputs.
 type Executor interface {
-	Execute(ctx context.Context, step *config.Step, resolveCtx *resolve.ResolveContext) (map[string]interface{}, error)
+	Execute(ctx context.Context, step *config.Step, resolveCtx *resolve.ResolveContext) (map[string]any, error)
 }
 
 // GraphQLExecutor executes github_graphql steps.
@@ -35,7 +35,7 @@ func NewGraphQLExecutor(endpoint, token string) *GraphQLExecutor {
 
 // Execute runs a github_graphql step: resolves variables, sends the GraphQL
 // request, checks for errors, and extracts outputs.
-func (g *GraphQLExecutor) Execute(ctx context.Context, step *config.Step, resolveCtx *resolve.ResolveContext) (map[string]interface{}, error) {
+func (g *GraphQLExecutor) Execute(ctx context.Context, step *config.Step, resolveCtx *resolve.ResolveContext) (map[string]any, error) {
 	// 1. Resolve variables
 	resolved, err := resolve.ResolveMap(step.Config.Variables, resolveCtx)
 	if err != nil {
@@ -43,7 +43,7 @@ func (g *GraphQLExecutor) Execute(ctx context.Context, step *config.Step, resolv
 	}
 
 	// 2. Build GraphQL request body
-	body := map[string]interface{}{
+	body := map[string]any{
 		"query":     step.Config.Document,
 		"variables": resolved,
 	}
@@ -67,7 +67,7 @@ func (g *GraphQLExecutor) Execute(ctx context.Context, step *config.Step, resolv
 	defer resp.Body.Close()
 
 	// 4. Parse JSON response
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("decoding response: %w", err)
 	}
@@ -79,8 +79,8 @@ func (g *GraphQLExecutor) Execute(ctx context.Context, step *config.Step, resolv
 
 	// 5. Check for GraphQL errors
 	if errs, ok := result["errors"]; ok {
-		if errSlice, ok := errs.([]interface{}); ok && len(errSlice) > 0 {
-			if first, ok := errSlice[0].(map[string]interface{}); ok {
+		if errSlice, ok := errs.([]any); ok && len(errSlice) > 0 {
+			if first, ok := errSlice[0].(map[string]any); ok {
 				if msg, ok := first["message"].(string); ok {
 					return nil, fmt.Errorf("GraphQL error: %s", msg)
 				}
@@ -90,7 +90,7 @@ func (g *GraphQLExecutor) Execute(ctx context.Context, step *config.Step, resolv
 	}
 
 	// 6. Extract outputs
-	outputs := make(map[string]interface{})
+	outputs := make(map[string]any)
 	for name, path := range step.Config.Outputs {
 		val, ok := extractField(result, path)
 		if !ok {
@@ -103,11 +103,11 @@ func (g *GraphQLExecutor) Execute(ctx context.Context, step *config.Step, resolv
 }
 
 // extractField traverses a nested map using a dot-separated path.
-func extractField(data interface{}, path string) (interface{}, bool) {
+func extractField(data any, path string) (any, bool) {
 	keys := strings.Split(path, ".")
 	current := data
 	for _, key := range keys {
-		m, ok := current.(map[string]interface{})
+		m, ok := current.(map[string]any)
 		if !ok {
 			return nil, false
 		}

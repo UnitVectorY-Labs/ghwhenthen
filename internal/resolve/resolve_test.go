@@ -12,11 +12,11 @@ func makeTestContext() *ResolveContext {
 			Attributes: map[string]string{
 				"gh_event": "pull_request",
 			},
-			Payload: map[string]interface{}{
-				"repository": map[string]interface{}{
+			Payload: map[string]any{
+				"repository": map[string]any{
 					"visibility": "private",
 				},
-				"pull_request": map[string]interface{}{
+				"pull_request": map[string]any{
 					"node_id": "PR_abc123",
 				},
 			},
@@ -24,16 +24,16 @@ func makeTestContext() *ResolveContext {
 				"event_type": "pull_request.opened",
 			},
 		},
-		Constants: map[string]interface{}{
-			"projects": map[string]interface{}{
-				"public": map[string]interface{}{
+		Constants: map[string]any{
+			"projects": map[string]any{
+				"public": map[string]any{
 					"project_id": "PVT_123",
 				},
 			},
 			"key":     "simple_value",
 			"enabled": true,
 		},
-		Steps: map[string]map[string]interface{}{
+		Steps: map[string]map[string]any{
 			"add_to_project": {
 				"itemId": "PVTI_456",
 			},

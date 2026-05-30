@@ -16,7 +16,7 @@ type Event struct {
 	Attributes   map[string]string
 	PayloadRaw   []byte
 	PayloadBytes []byte
-	Payload      map[string]interface{}
+	Payload      map[string]any
 	Meta         map[string]string
 }
 
@@ -63,7 +63,7 @@ func BuildEvent(data []byte, attributes map[string]string) (*Event, error) {
 	}
 
 	// Decode JSON
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal(decompressed, &payload); err != nil {
 		return nil, fmt.Errorf("JSON decode failed: %w", err)
 	}
@@ -86,7 +86,7 @@ func BuildEvent(data []byte, attributes map[string]string) (*Event, error) {
 }
 
 // GetField resolves a dot-separated path against the event's namespaces.
-func (e *Event) GetField(path string) (interface{}, bool) {
+func (e *Event) GetField(path string) (any, bool) {
 	parts := strings.SplitN(path, ".", 2)
 	if len(parts) == 0 {
 		return nil, false
@@ -122,7 +122,7 @@ func (e *Event) GetField(path string) (interface{}, bool) {
 }
 
 // traverseMap walks a nested map following the given key segments.
-func traverseMap(m map[string]interface{}, keys []string) (interface{}, bool) {
+func traverseMap(m map[string]any, keys []string) (any, bool) {
 	if len(keys) == 0 {
 		return nil, false
 	}
@@ -136,7 +136,7 @@ func traverseMap(m map[string]interface{}, keys []string) (interface{}, bool) {
 		return val, true
 	}
 
-	nested, ok := val.(map[string]interface{})
+	nested, ok := val.(map[string]any)
 	if !ok {
 		return nil, false
 	}

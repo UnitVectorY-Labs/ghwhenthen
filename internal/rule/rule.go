@@ -22,12 +22,12 @@ type Engine struct {
 	Rules     []CompiledRule
 	Endpoint  string
 	Token     string
-	Constants map[string]interface{}
+	Constants map[string]any
 }
 
 // NewEngine compiles rules and creates the engine.
 // Returns error if any when expression fails to parse.
-func NewEngine(rules []config.Rule, constants map[string]interface{}, endpoint string, token string) (*Engine, error) {
+func NewEngine(rules []config.Rule, constants map[string]any, endpoint string, token string) (*Engine, error) {
 	compiled := make([]CompiledRule, 0, len(rules))
 	for i := range rules {
 		expression, err := expr.Parse(rules[i].When)
@@ -64,7 +64,7 @@ func (eng *Engine) ProcessEvent(ctx context.Context, evt *event.Event) (matched 
 		resolveCtx := &resolve.ResolveContext{
 			Event:     evt,
 			Constants: eng.Constants,
-			Steps:     make(map[string]map[string]interface{}),
+			Steps:     make(map[string]map[string]any),
 		}
 
 		for _, s := range rule.Config.Then {

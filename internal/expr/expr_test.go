@@ -6,7 +6,7 @@ import (
 	"github.com/UnitVectorY-Labs/ghwhenthen/internal/event"
 )
 
-func makeEvent(attrs map[string]string, payload map[string]interface{}) *event.Event {
+func makeEvent(attrs map[string]string, payload map[string]any) *event.Event {
 	return &event.Event{
 		Attributes: attrs,
 		Payload:    payload,
@@ -102,8 +102,8 @@ func TestBooleanTrue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	e := makeEvent(nil, map[string]interface{}{
-		"repository": map[string]interface{}{"private": true},
+	e := makeEvent(nil, map[string]any{
+		"repository": map[string]any{"private": true},
 	})
 	if !expr.Evaluate(e) {
 		t.Error("expected true")
@@ -115,14 +115,14 @@ func TestBooleanFalse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	e := makeEvent(nil, map[string]interface{}{
-		"repository": map[string]interface{}{"private": false},
+	e := makeEvent(nil, map[string]any{
+		"repository": map[string]any{"private": false},
 	})
 	if !expr.Evaluate(e) {
 		t.Error("expected true")
 	}
-	e2 := makeEvent(nil, map[string]interface{}{
-		"repository": map[string]interface{}{"private": true},
+	e2 := makeEvent(nil, map[string]any{
+		"repository": map[string]any{"private": true},
 	})
 	if expr.Evaluate(e2) {
 		t.Error("expected false")
@@ -135,13 +135,13 @@ func TestNullLiteral(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Field absent → null matches
-	e := makeEvent(nil, map[string]interface{}{})
+	e := makeEvent(nil, map[string]any{})
 	if !expr.Evaluate(e) {
 		t.Error("expected true for absent field")
 	}
 	// Field present → null does not match
-	e2 := makeEvent(nil, map[string]interface{}{
-		"pull_request": map[string]interface{}{"id": 1.0},
+	e2 := makeEvent(nil, map[string]any{
+		"pull_request": map[string]any{"id": 1.0},
 	})
 	if expr.Evaluate(e2) {
 		t.Error("expected false for present field")
@@ -153,8 +153,8 @@ func TestHasTrue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	e := makeEvent(nil, map[string]interface{}{
-		"pull_request": map[string]interface{}{"node_id": "abc123"},
+	e := makeEvent(nil, map[string]any{
+		"pull_request": map[string]any{"node_id": "abc123"},
 	})
 	if !expr.Evaluate(e) {
 		t.Error("expected true")
@@ -166,7 +166,7 @@ func TestHasFalse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	e := makeEvent(nil, map[string]interface{}{})
+	e := makeEvent(nil, map[string]any{})
 	if expr.Evaluate(e) {
 		t.Error("expected false for missing field")
 	}
@@ -177,8 +177,8 @@ func TestNestedPayload(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	e := makeEvent(nil, map[string]interface{}{
-		"repository": map[string]interface{}{"visibility": "public"},
+	e := makeEvent(nil, map[string]any{
+		"repository": map[string]any{"visibility": "public"},
 	})
 	if !expr.Evaluate(e) {
 		t.Error("expected true")
@@ -217,8 +217,8 @@ func TestFullExpression(t *testing.T) {
 
 	e := makeEvent(
 		map[string]string{"gh_event": "pull_request", "action": "opened"},
-		map[string]interface{}{
-			"repository": map[string]interface{}{"visibility": "private", "private": true},
+		map[string]any{
+			"repository": map[string]any{"visibility": "private", "private": true},
 		},
 	)
 	if !expr.Evaluate(e) {
@@ -227,8 +227,8 @@ func TestFullExpression(t *testing.T) {
 
 	e2 := makeEvent(
 		map[string]string{"gh_event": "push", "action": "opened"},
-		map[string]interface{}{
-			"repository": map[string]interface{}{"visibility": "private", "private": true},
+		map[string]any{
+			"repository": map[string]any{"visibility": "private", "private": true},
 		},
 	)
 	if expr.Evaluate(e2) {
@@ -285,12 +285,12 @@ func TestInequalityWithNull(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Absent field → != null is false
-	e1 := makeEvent(nil, map[string]interface{}{})
+	e1 := makeEvent(nil, map[string]any{})
 	if expr.Evaluate(e1) {
 		t.Error("expected false for absent field != null")
 	}
 	// Present field → != null is true
-	e2 := makeEvent(nil, map[string]interface{}{"field": "value"})
+	e2 := makeEvent(nil, map[string]any{"field": "value"})
 	if !expr.Evaluate(e2) {
 		t.Error("expected true for present field != null")
 	}

@@ -131,7 +131,7 @@ func TestBuildEvent_ZstdDecompressionFails(t *testing.T) {
 func TestGetField_Attributes(t *testing.T) {
 	ev := &Event{
 		Attributes: map[string]string{"gh_event": "push"},
-		Payload:    map[string]interface{}{},
+		Payload:    map[string]any{},
 		Meta:       map[string]string{},
 	}
 
@@ -144,7 +144,7 @@ func TestGetField_Attributes(t *testing.T) {
 func TestGetField_Meta(t *testing.T) {
 	ev := &Event{
 		Attributes: map[string]string{},
-		Payload:    map[string]interface{}{},
+		Payload:    map[string]any{},
 		Meta:       map[string]string{"compression": "gzip"},
 	}
 
@@ -156,7 +156,7 @@ func TestGetField_Meta(t *testing.T) {
 
 func TestGetField_PayloadNested(t *testing.T) {
 	payload := `{"repository":{"visibility":"private","owner":{"login":"octocat"}}}`
-	var p map[string]interface{}
+	var p map[string]any
 	if err := json.Unmarshal([]byte(payload), &p); err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +169,7 @@ func TestGetField_PayloadNested(t *testing.T) {
 
 	tests := []struct {
 		path string
-		want interface{}
+		want any
 	}{
 		{"payload.repository.visibility", "private"},
 		{"payload.repository.owner.login", "octocat"},
@@ -190,7 +190,7 @@ func TestGetField_PayloadNested(t *testing.T) {
 func TestGetField_MissingFields(t *testing.T) {
 	ev := &Event{
 		Attributes: map[string]string{},
-		Payload:    map[string]interface{}{},
+		Payload:    map[string]any{},
 		Meta:       map[string]string{},
 	}
 

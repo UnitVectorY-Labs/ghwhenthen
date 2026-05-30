@@ -24,7 +24,7 @@ func TestExecute_Success(t *testing.T) {
 			t.Errorf("expected Content-Type 'application/json', got %q", got)
 		}
 
-		var body map[string]interface{}
+		var body map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("decoding request body: %v", err)
 		}
@@ -33,10 +33,10 @@ func TestExecute_Success(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"data": map[string]interface{}{
-				"addProjectV2ItemById": map[string]interface{}{
-					"item": map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"addProjectV2ItemById": map[string]any{
+					"item": map[string]any{
 						"id": "ITEM_123",
 					},
 				},
@@ -76,9 +76,9 @@ func TestExecute_Success(t *testing.T) {
 func TestExecute_GraphQLErrors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string]any{
 			"data":   nil,
-			"errors": []interface{}{map[string]interface{}{"message": "Could not resolve to a node"}},
+			"errors": []any{map[string]any{"message": "Could not resolve to a node"}},
 		})
 	}))
 	defer server.Close()
@@ -111,7 +111,7 @@ func TestExecute_GraphQLErrors(t *testing.T) {
 func TestExecute_Non200Status(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string]any{
 			"message": "Bad credentials",
 		})
 	}))
@@ -182,14 +182,14 @@ func TestExecute_VariableResolutionFailure(t *testing.T) {
 func TestExecute_NestedOutputExtraction(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"data": map[string]interface{}{
-				"repository": map[string]interface{}{
-					"issue": map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"repository": map[string]any{
+					"issue": map[string]any{
 						"id":     "ISSUE_456",
 						"number": float64(42),
 						"title":  "Fix the bug",
-						"author": map[string]interface{}{
+						"author": map[string]any{
 							"login": "octocat",
 						},
 					},
@@ -250,7 +250,7 @@ func TestExecute_TwoStepChain(t *testing.T) {
 	// Simulate: step 1 adds an item, step 2 updates a field using step 1's output
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var body map[string]interface{}
+		var body map[string]any
 		json.NewDecoder(r.Body).Decode(&body)
 
 		callCount++
@@ -258,10 +258,10 @@ func TestExecute_TwoStepChain(t *testing.T) {
 		case 1:
 			// Step 1: addProjectV2ItemById
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"data": map[string]interface{}{
-					"addProjectV2ItemById": map[string]interface{}{
-						"item": map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"addProjectV2ItemById": map[string]any{
+						"item": map[string]any{
 							"id": "PVTI_item123",
 						},
 					},
@@ -269,15 +269,15 @@ func TestExecute_TwoStepChain(t *testing.T) {
 			})
 		case 2:
 			// Step 2: updateProjectV2ItemFieldValue — verify it received step 1's output
-			vars := body["variables"].(map[string]interface{})
+			vars := body["variables"].(map[string]any)
 			if vars["itemId"] != "PVTI_item123" {
 				t.Errorf("step 2 expected itemId=PVTI_item123, got %v", vars["itemId"])
 			}
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"data": map[string]interface{}{
-					"updateProjectV2ItemFieldValue": map[string]interface{}{
-						"projectV2Item": map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"updateProjectV2ItemFieldValue": map[string]any{
+						"projectV2Item": map[string]any{
 							"id": "PVTI_item123",
 						},
 					},
@@ -296,12 +296,12 @@ func TestExecute_TwoStepChain(t *testing.T) {
 	}
 
 	resolveCtx := &resolve.ResolveContext{
-		Constants: map[string]interface{}{
+		Constants: map[string]any{
 			"project_id":    "PVT_proj456",
 			"status_field":  "FIELD_status",
 			"status_option": "OPT_done",
 		},
-		Steps: make(map[string]map[string]interface{}),
+		Steps: make(map[string]map[string]any),
 	}
 
 	// Step 1: Add item to project
@@ -359,9 +359,9 @@ func TestExecute_TwoStepChain(t *testing.T) {
 }
 
 func TestExtractField(t *testing.T) {
-	data := map[string]interface{}{
-		"data": map[string]interface{}{
-			"nested": map[string]interface{}{
+	data := map[string]any{
+		"data": map[string]any{
+			"nested": map[string]any{
 				"value": "found",
 			},
 		},

@@ -10,14 +10,14 @@ import (
 // ResolveContext holds all data needed for variable resolution.
 type ResolveContext struct {
 	Event     *event.Event
-	Constants map[string]interface{}
-	Steps     map[string]map[string]interface{}
+	Constants map[string]any
+	Steps     map[string]map[string]any
 }
 
 // Resolve resolves a string value that may contain ${...} references.
 // If the entire string is a single ${...} reference, the raw resolved value is returned.
 // Otherwise, references are interpolated as strings into the surrounding text.
-func Resolve(input string, ctx *ResolveContext) (interface{}, error) {
+func Resolve(input string, ctx *ResolveContext) (any, error) {
 	refs, err := parseReferences(input)
 	if err != nil {
 		return nil, err
@@ -58,8 +58,8 @@ func ResolveString(input string, ctx *ResolveContext) (string, error) {
 }
 
 // ResolveMap resolves all values in a map[string]string and returns a map[string]interface{}.
-func ResolveMap(m map[string]string, ctx *ResolveContext) (map[string]interface{}, error) {
-	result := make(map[string]interface{}, len(m))
+func ResolveMap(m map[string]string, ctx *ResolveContext) (map[string]any, error) {
+	result := make(map[string]any, len(m))
 	for k, v := range m {
 		val, err := Resolve(v, ctx)
 		if err != nil {
@@ -121,7 +121,7 @@ func parseReferences(input string) ([]reference, error) {
 }
 
 // resolveReference resolves a single expression (the content inside ${...}).
-func resolveReference(expr string, ctx *ResolveContext) (interface{}, error) {
+func resolveReference(expr string, ctx *ResolveContext) (any, error) {
 	expr = strings.TrimSpace(expr)
 
 	if strings.HasPrefix(expr, "coalesce(") && strings.HasSuffix(expr, ")") {
@@ -132,7 +132,7 @@ func resolveReference(expr string, ctx *ResolveContext) (interface{}, error) {
 }
 
 // resolvePath resolves a single dotted path reference.
-func resolvePath(path string, ctx *ResolveContext) (interface{}, error) {
+func resolvePath(path string, ctx *ResolveContext) (any, error) {
 	path = strings.TrimSpace(path)
 
 	switch {
@@ -160,11 +160,11 @@ func resolvePath(path string, ctx *ResolveContext) (interface{}, error) {
 }
 
 // resolveCoalesce implements coalesce(a, b, ...) returning the first non-nil value.
-func resolveCoalesce(expr string, ctx *ResolveContext) (interface{}, error) {
+func resolveCoalesce(expr string, ctx *ResolveContext) (any, error) {
 	inner := expr[len("coalesce(") : len(expr)-1]
-	args := strings.Split(inner, ",")
+	args := strings.SplitSeq(inner, ",")
 
-	for _, arg := range args {
+	for arg := range args {
 		arg = strings.TrimSpace(arg)
 		if arg == "" {
 			continue
@@ -178,19 +178,19 @@ func resolveCoalesce(expr string, ctx *ResolveContext) (interface{}, error) {
 }
 
 // resolveConstants traverses a nested map using a dot-separated path.
-func resolveConstants(path string, constants map[string]interface{}) (interface{}, error) {
+func resolveConstants(path string, constants map[string]any) (any, error) {
 	keys := strings.Split(path, ".")
-	var current interface{} = constants
+	var current any = constants
 
 	for _, key := range keys {
 		switch m := current.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			val, ok := m[key]
 			if !ok {
 				return nil, fmt.Errorf("cannot resolve constants path %q: key %q not found", path, key)
 			}
 			current = val
-		case map[interface{}]interface{}:
+		case map[any]any:
 			val, ok := m[key]
 			if !ok {
 				return nil, fmt.Errorf("cannot resolve constants path %q: key %q not found", path, key)
@@ -204,7 +204,7 @@ func resolveConstants(path string, constants map[string]interface{}) (interface{
 }
 
 // resolveSteps resolves steps.<step_name>.outputs.<output_name>.
-func resolveSteps(path string, steps map[string]map[string]interface{}) (interface{}, error) {
+func resolveSteps(path string, steps map[string]map[string]any) (any, error) {
 	parts := strings.SplitN(path, ".", 3)
 	if len(parts) < 3 || parts[1] != "outputs" {
 		return nil, fmt.Errorf("invalid steps reference %q: expected steps.<name>.outputs.<key>", "steps."+path)

@@ -55,7 +55,7 @@ func TestNoRulesMatch(t *testing.T) {
 func TestFirstMatchingRuleSelected(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"data": map[string]interface{}{}})
+		json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{}})
 	}))
 	defer srv.Close()
 
@@ -98,7 +98,7 @@ func TestFirstMatchingRuleSelected(t *testing.T) {
 func TestDisabledRuleSkipped(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"data": map[string]interface{}{}})
+		json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{}})
 	}))
 	defer srv.Close()
 
@@ -160,7 +160,7 @@ func TestStepExecutionFailure(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"error": "server error"})
+		json.NewEncoder(w).Encode(map[string]any{"error": "server error"})
 	}))
 	defer srv.Close()
 
@@ -195,17 +195,17 @@ func TestStepExecutionFailure(t *testing.T) {
 func TestTwoStepExecutionPassesOutputs(t *testing.T) {
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var reqBody map[string]interface{}
+		var reqBody map[string]any
 		json.NewDecoder(r.Body).Decode(&reqBody)
 
 		w.Header().Set("Content-Type", "application/json")
 
 		if callCount == 0 {
 			// First step: return a label ID
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"data": map[string]interface{}{
-					"repository": map[string]interface{}{
-						"label": map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"repository": map[string]any{
+						"label": map[string]any{
 							"id": "LABEL_456",
 						},
 					},
@@ -213,17 +213,17 @@ func TestTwoStepExecutionPassesOutputs(t *testing.T) {
 			})
 		} else {
 			// Second step: verify the variable from step 1 was passed
-			vars, _ := reqBody["variables"].(map[string]interface{})
+			vars, _ := reqBody["variables"].(map[string]any)
 			labelID, _ := vars["labelId"].(string)
 			if labelID != "LABEL_456" {
 				t.Errorf("expected labelId=LABEL_456, got %q", labelID)
 				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]interface{}{"errors": []interface{}{map[string]interface{}{"message": "bad labelId"}}})
+				json.NewEncoder(w).Encode(map[string]any{"errors": []any{map[string]any{"message": "bad labelId"}}})
 				return
 			}
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"data": map[string]interface{}{
-					"addLabelsToLabelable": map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"addLabelsToLabelable": map[string]any{
 						"clientMutationId": "done",
 					},
 				},
@@ -290,7 +290,7 @@ func TestTwoStepExecutionPassesOutputs(t *testing.T) {
 func TestSecondRuleMatchesWhenFirstDoesNot(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"data": map[string]interface{}{}})
+		json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{}})
 	}))
 	defer srv.Close()
 
@@ -336,9 +336,9 @@ func TestStepExecutionFailureStopsRemaining(t *testing.T) {
 		callCount++
 		w.Header().Set("Content-Type", "application/json")
 		// First step returns a GraphQL error
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"errors": []interface{}{
-				map[string]interface{}{"message": "not found"},
+		json.NewEncoder(w).Encode(map[string]any{
+			"errors": []any{
+				map[string]any{"message": "not found"},
 			},
 		})
 	}))
