@@ -5,7 +5,7 @@ go 1.26.0 // GOVERSION
 require gopkg.in/yaml.v3 v3.0.1
 
 require (
-	cloud.google.com/go/pubsub v1.50.4
+	cloud.google.com/go/pubsub v1.51.0
 	github.com/klauspost/compress v1.19.1
 )
 
