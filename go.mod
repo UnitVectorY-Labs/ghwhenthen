@@ -6,7 +6,7 @@ require gopkg.in/yaml.v3 v3.0.1
 
 require (
 	cloud.google.com/go/pubsub v1.50.4
-	github.com/klauspost/compress v1.19.0
+	github.com/klauspost/compress v1.19.1
 )
 
 require (
